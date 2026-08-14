@@ -1,0 +1,6 @@
+# Copy to key.properties — never commit real passwords or the .jks file
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=kulu-upload
+# Path relative to android/ project root (used by rootProject.file)
+storeFile=keystore/kulu-upload.jks

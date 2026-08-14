@@ -1,0 +1,73 @@
+// ⚠️ REFERENCE ONLY — this is already fully merged into the real android/app/build.gradle in this repo.
+// Do NOT paste this into build.gradle again — it would duplicate blocks and break the Gradle build.
+
+// TEMPLATE — merge into a full RN 0.75 android/app/build.gradle
+// This is NOT a complete file; use with the official RN template.
+
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+// apply plugin: "com.google.gms.google-services"  // after google-services.json is present
+
+def keystorePropertiesFile = rootProject.file("keystore/key.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+/**
+ * This is the configuration block for the Android React Native app.
+ * Adjust applicationId / version when publishing.
+ */
+android {
+    ndkVersion rootProject.ext.ndkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdk rootProject.ext.compileSdkVersion
+
+    namespace "com.kulu.mobile"
+    defaultConfig {
+        applicationId "com.kulu.mobile"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    packaging {
+        resources {
+            pickFirsts += [
+                "**/libc++_shared.so",
+                "**/libfbjni.so",
+                "**/libhermes.so",
+                "**/libjsi.so",
+            ]
+        }
+    }
+}
+
+dependencies {
+    // RN template dependencies remain as generated
+}

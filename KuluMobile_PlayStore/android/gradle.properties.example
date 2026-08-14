@@ -1,0 +1,6 @@
+# Copy into android/gradle.properties after RN android project is generated
+hermesEnabled=true
+newArchEnabled=false
+org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m
+org.gradle.parallel=true
+android.enableR8.fullMode=true

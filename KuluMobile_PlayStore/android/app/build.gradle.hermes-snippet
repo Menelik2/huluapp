@@ -1,0 +1,48 @@
+// ⚠️ REFERENCE ONLY — this is already fully merged into the real android/app/build.gradle in this repo.
+// Do NOT paste this into build.gradle again — it would duplicate blocks and break the Gradle build.
+
+/**
+ * Merge these settings into android/app/build.gradle
+ * (React Native 0.75 already wires Hermes via hermesEnabled in gradle.properties)
+ */
+
+android {
+    defaultConfig {
+        // Prefer 64-bit + 32-bit arm for Play Store
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86_64"
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Hermes is still used in debug when hermesEnabled=true
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            // signingConfig signingConfigs.release  // configure for Play upload
+        }
+    }
+
+    packagingOptions {
+        // Avoid duplicate libc++ / Hermes .so conflicts
+        pickFirst "**/libc++_shared.so"
+        pickFirst "**/libfbjni.so"
+        pickFirst "**/libhermes.so"
+        pickFirst "**/libjsi.so"
+    }
+}
+
+dependencies {
+    // RN 0.75 template already selects Hermes vs JSC from gradle.properties:
+    //
+    // if (hermesEnabled.toBoolean()) {
+    //     implementation("com.facebook.react:hermes-android")
+    // } else {
+    //     implementation jscFlavor
+    // }
+    //
+    // Do not force both engines.
+}

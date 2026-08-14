@@ -1,0 +1,54 @@
+// ⚠️ REFERENCE ONLY — this is already fully merged into the real android/app/build.gradle in this repo.
+// Do NOT paste this into build.gradle again — it would duplicate blocks and break the Gradle build.
+
+/**
+ * Merge into android/app/build.gradle (React Native 0.75 template).
+ *
+ * 1. Create keystore (see SIGNING.md)
+ * 2. Copy android/keystore/key.properties.example → android/keystore/key.properties
+ * 3. Paste the blocks below into app/build.gradle
+ */
+
+// --- at top of android/app/build.gradle (after plugins / before android {) ---
+def keystorePropertiesFile = rootProject.file("keystore/key.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    // ... existing namespace, defaultConfig, etc.
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            // Use upload keystore when key.properties exists; otherwise debug (local only)
+            signingConfig keystorePropertiesFile.exists()
+                ? signingConfigs.release
+                : signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    packagingOptions {
+        pickFirst "**/libc++_shared.so"
+        pickFirst "**/libfbjni.so"
+        pickFirst "**/libhermes.so"
+        pickFirst "**/libjsi.so"
+    }
+}

@@ -1,0 +1,3 @@
+// android/build.gradle — ensure React Native Gradle Plugin is applied (RN 0.75 template).
+// Hermes artifacts come from Maven Central via com.facebook.react:hermes-android.
+// No extra repository is required beyond google() and mavenCentral().
