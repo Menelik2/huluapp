@@ -1,9 +1,7 @@
 -- KuluApp full schema (final)
 -- Import via phpMyAdmin or: mysql -u USER -p < kulu_database_full.sql
 -- Charset: utf8mb4
-
-CREATE DATABASE IF NOT EXISTS kuluapp CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE kuluapp;
+-- NOTE: Select your database (e.g. if0_42274082_kulu_db) in phpMyAdmin before importing
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
