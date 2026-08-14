@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kulu Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+  <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
+  <script src="../config.js"></script>
+  <script src="../echo.js"></script>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111827;
+      --panel2: #1a2336;
+      --card: #151f32;
+      --ink: #e8eefc;
+      --muted: #8b9bb8;
+      --line: #243044;
+      --brand: #3b82f6;
+      --brand2: #2563eb;
+      --ok: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    a { color: var(--brand); }
+    .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: sticky; top: 0; z-index: 20; }
+    }
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .brand {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.03em;
+      padding: 8px 10px 16px;
+    }
+    .brand span { color: var(--brand); }
+    .nav-btn {
+      text-align: left;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .nav-btn:hover { background: var(--panel2); color: var(--ink); }
+    .nav-btn.on { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    .main { padding: 20px 18px 48px; }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .h1 { font-size: 1.45rem; font-weight: 800; margin: 0; letter-spacing: -0.02em; }
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 13px;
+      cursor: pointer;
+      font-weight: 700;
+      background: var(--brand);
+      color: #fff;
+    }
+    .btn:hover { background: var(--brand2); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--ink);
+    }
+    .btn.ok { background: var(--ok); color: #052e16; }
+    .btn.danger { background: var(--danger); }
+    .btn.sm { padding: 6px 10px; font-size: 0.82rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat b { display: block; font-size: 1.45rem; color: #93c5fd; }
+    .stat span { color: var(--muted); font-size: 0.85rem; }
+    .muted { color: var(--muted); }
+    .stack { display: flex; flex-direction: column; gap: 10px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .input, select.input, textarea.input {
+      width: 100%;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .input:focus { outline: 2px solid rgba(59,130,246,0.35); border-color: var(--brand); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      font-size: 0.92rem;
+    }
+    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .chip {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(59,130,246,0.15);
+      color: #93c5fd;
+    }
+    .chip.ok { background: rgba(34,197,94,0.15); color: #86efac; }
+    .chip.warn { background: rgba(245,158,11,0.15); color: #fcd34d; }
+    .chip.bad { background: rgba(239,68,68,0.15); color: #fca5a5; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .thumb { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; background: var(--panel2); }
+    .bar-row { display: grid; grid-template-columns: 100px 1fr 48px; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .bar-track { background: var(--panel2); border-radius: 999px; height: 10px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #22d3ee); border-radius: 999px; }
+    .chat-box {
+      height: 360px;
+      overflow: auto;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .msg { padding: 8px 10px; border-radius: 10px; margin-bottom: 8px; background: var(--card); }
+    .msg.me { background: rgba(59,130,246,0.2); }
+    .empty { text-align: center; color: var(--muted); padding: 36px 8px; }
+    .toast {
+      position: fixed; right: 16px; bottom: 16px; z-index: 50;
+      background: #f8fafc; color: #0f172a; padding: 12px 14px; border-radius: 12px;
+      max-width: 320px; font-weight: 600; box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    }
+    .login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+    .login-card { width: min(400px, 100%); text-align: center; }
+    .form-grid { display: grid; gap: 10px; }
+    @media (min-width: 720px) { .form-grid.two { grid-template-columns: 1fr 1fr; } }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+    .split { display: grid; gap: 12px; }
+    @media (min-width: 960px) { .split.two { grid-template-columns: 1.2fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+const CFG = window.KULU_CONFIG || {};
+const API = (CFG.API_BASE_URL || '').replace(/\/$/, '');
+
+function storageGet(k, fallback) {
+  try {
+    const v = localStorage.getItem(k);
+    return v ? JSON.parse(v) : fallback;
+  } catch (e) { return fallback; }
+}
+function storageSet(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+
+let authToken = storageGet('kulu_token', null);
+
+async function api(path, options) {
+  options = options || {};
+  const headers = Object.assign({ Accept: 'application/json' }, options.headers || {});
+  if (authToken) headers.Authorization = 'Bearer ' + authToken;
+  if (options.body && !(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(options.body);
+  }
+  const res = await fetch(API + path, Object.assign({}, options, { headers }));
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (e) { data = { message: text }; }
+  if (!res.ok) {
+    const msg = (data && (data.message || (data.errors && JSON.stringify(data.errors)))) || ('HTTP ' + res.status);
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+function Toast({ message, onClose }) {
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(onClose, 3200);
+    return () => clearTimeout(t);
+  }, [message, onClose]);
+  if (!message) return null;
+  return <div className="toast">{message}</div>;
+}
+
+function statusChip(status) {
+  const s = String(status || '');
+  let cls = 'chip';
+  if (s === 'delivered' || s === 'paid' || s === 'confirmed') cls += ' ok';
+  else if (s === 'cancelled' || s === 'failed') cls += ' bad';
+  else if (s === 'pending' || s === 'processing' || s === 'shipped') cls += ' warn';
+  return <span className={cls}>{s || '—'}</span>;
+}
+
+function Login({ onLogin, toast }) {
+  const [loading, setLoading] = useState(false);
+  const login = async () => {
+    try {
+      setLoading(true);
+      if (!CFG.FIREBASE || CFG.FIREBASE.apiKey === 'YOUR_API_KEY') throw new Error('Set Firebase in web/config.js');
+      if (!firebase.apps.length) firebase.initializeApp(CFG.FIREBASE);
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const result = await firebase.auth().signInWithPopup(provider);
+      const idToken = await result.user.getIdToken();
+      const data = await api('/auth/google', { method: 'POST', body: { id_token: idToken } });
+      if (data.user.role !== 'admin') throw new Error('This account is not an admin.');
+      authToken = data.token;
+      storageSet('kulu_token', data.token);
+      storageSet('kulu_user', data.user);
+      onLogin(data.user);
+      toast('Admin signed in');
+    } catch (e) {
+      toast(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <div className="login-wrap">
+      <div className="card login-card stack">
+        <div className="brand">Kulu <span>Admin</span></div>
+        <p className="muted">Sign in with the Google account that matches ADMIN_EMAIL on the API.</p>
+        <button className="btn" disabled={loading} onClick={login}>{loading ? 'Signing in…' : 'Sign in with Google'}</button>
+        <p className="muted" style={{ fontSize: '0.8rem' }}>API: {API || '(not set)'}</p>
+      </div>
+    </div>
+  );
+}
+
+function Overview({ toast }) {
+  const [overview, setOverview] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const load = useCallback(async () => {
+    try {
+      const [o, a] = await Promise.all([api('/admin/overview'), api('/admin/analytics')]);
+      setOverview(o);
+      setAnalytics(a);
+    } catch (e) { toast(e.message); }
+  }, [toast]);
+  useEffect(() => { load(); }, [load]);
+
+  if (!overview) return <div className="empty">Loading dashboard…</div>;
+
+  const byStatus = analytics && analytics.orders_by_status ? analytics.orders_by_status : [];
+  const maxStatus = Math.max(1, ...byStatus.map((x) => Number(x.total) || 0));
+  const byDay = analytics && analytics.sales_by_day ? analytics.sales_by_day : [];
+  const maxDay = Math.max(1, ...byDay.map((x) => Number(x.total) || 0));
+
+  return (
+    <div className="stack">
+      <div className="stats">
+        {[
+          ['Orders', overview.orders],
+          ['Pending', overview.pending_orders],
+          ['Products', overview.products],
+          ['Categories', overview.categories],
+          ['Customers', overview.customers],
+          ['Sales ETB', overview.sales],
+        ].map(([l, v]) => (
+          <div className="card stat" key={l}><b>{v != null ? v : '—'}</b><span>{l}</span></div>
+        ))}
+      </div>
+      <div className="split two">
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Orders by status</h3>
+          {!byStatus.length ? <div className="muted">No data</div> : byStatus.map((x) => (
+            <div className="bar-row" key={x.status}>
+              <span className="muted">{x.status}</span>
+              <div className="bar-track"><div className="bar-fill" style={{ width: ((Number(x.total) / maxStatus) * 100) + '%' }} /></div>
+              <b>{x.total}</b>
+            </div>
+          ))}
+        </div>
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Sales (30 days)</h3>
+          {!byDay.length ? <div className="muted">No paid sales yet</div> : byDay.map((x) => (
+            <div className="bar-row" key={x.day}>
+              <span className="muted" style={{ fontSize: '0.8rem' }}>{x.day}</span>
+              <div className="bar-track"><div className="bar-fill" style={{ width: ((Number(x.total) / maxDay) * 100) + '%' }} /></div>
+              <span style={{ fontSize: '0.8rem' }}>{Number(x.total).toFixed(0)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <button className="btn ghost sm" onClick={load}>Refresh</button>
+    </div>
+  );
+}
+
+function Orders({ toast }) {
+  const [orders, setOrders] = useState([]);
+  const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+  const load = useCallback(async () => {
+    try {
+      const d = await api('/admin/orders');
+      setOrders(d.data || d || []);
+    } catch (e) { toast(e.message); }
+  }, [toast]);
+  useEffect(() => { load(); }, [load]);
+
+  const setStatus = async (id, status) => {
+    try {
+      await api('/admin/orders/' + id + '/status', { method: 'PUT', body: { status } });
+      toast('Order #' + id + ' → ' + status);
+      load();
+    } catch (e) { toast(e.message); }
+  };
+
+  return (
+    <div className="card table-wrap">
+      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
+        <h3 style={{ margin: 0 }}>Orders</h3>
+        <button className="btn ghost sm" onClick={load}>Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Payment</th><th>Ship</th><th>Update</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orders.map((o) => (
+            <tr key={o.id}>
+              <td>#{o.id}</td>
+              <td>
+                <div>{(o.user && o.user.name) || '—'}</div>
+                <div className="muted" style={{ fontSize: '0.8rem' }}>{(o.user && o.user.email) || ''}</div>
+              </td>
+              <td>ETB {o.total_amount}</td>
+              <td>{statusChip(o.status)}</td>
+              <td>{statusChip(o.payment_status)}</td>
+              <td>
+                <div style={{ fontSize: '0.85rem' }}>{o.shipping_name}</div>
+                <div className="muted" style={{ fontSize: '0.8rem' }}>{o.shipping_phone}</div>
+              </td>
+              <td>
+                <select className="input" style={{ width: 'auto', minWidth: 120 }} value={o.status}
+                  onChange={(e) => setStatus(o.id, e.target.value)}>
+                  {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!orders.length ? <div className="empty">No orders</div> : null}
+    </div>
+  );
+}
+
+function Products({ toast }) {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState({ title: '', description: '', price: '', stock_quantity: '0', category_id: '', image: null });
+
+  const load = useCallback(async () => {
+    try {
+      const [p, c] = await Promise.all([api('/admin/products'), api('/categories')]);
+      setProducts(p.data || p || []);
+      setCategories(c || []);
+      if (c && c.length && !form.category_id) setForm((f) => Object.assign({}, f, { category_id: String(c[0].id) }));
+    } catch (e) { toast(e.message); }
+  }, [toast]);
+  useEffect(() => { load(); }, [load]);
+
+  const save = async () => {
+    if (!form.title || !form.description || !form.price || !form.category_id || !form.image) {
+      return toast('Title, description, price, category, and image are required');
+    }
+    const fd = new FormData();
+    fd.append('title', form.title);
+    fd.append('description', form.description);
+    fd.append('price', form.price);
+    fd.append('stock_quantity', form.stock_quantity || '0');
+    fd.append('category_id', form.category_id);
+    fd.append('image', form.image);
+    try {
+      await api('/admin/products', { method: 'POST', body: fd });
+      toast('Product created');
+      setShow(false);
+      setForm({ title: '', description: '', price: '', stock_quantity: '0', category_id: form.category_id, image: null });
+      load();
+    } catch (e) { toast(e.message); }
+  };
+
+  const remove = async (id) => {
+    if (!confirm('Delete or deactivate product #' + id + '?')) return;
+    try {
+      await api('/admin/products/' + id, { method: 'DELETE' });
+      load();
+    } catch (e) { toast(e.message); }
+  };
+
+  return (
+    <div className="stack">
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <h3 style={{ margin: 0 }}>Products</h3>
+        <button className="btn ok" onClick={() => setShow(!show)}>{show ? 'Close' : '+ Add product'}</button>
+      </div>
+      {show ? (
+        <div className="card form-grid two">
+          <div><label>Title</label><input className="input" value={form.title} onChange={(e) => setForm(Object.assign({}, form, { title: e.target.value }))} /></div>
+          <div><label>Price (ETB)</label><input className="input" type="number" value={form.price} onChange={(e) => setForm(Object.assign({}, form, { price: e.target.value }))} /></div>
+          <div><label>Stock</label><input className="input" type="number" value={form.stock_quantity} onChange={(e) => setForm(Object.assign({}, form, { stock_quantity: e.target.value }))} /></div>
+          <div>
+            <label>Category</label>
+            <select className="input" value={form.category_id} onChange={(e) => setForm(Object.assign({}, form, { category_id: e.target.value }))}>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label>Description</label>
+            <textarea className="input" rows={3} value={form.description} onChange={(e) => setForm(Object.assign({}, form, { description: e.target.value }))} />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label>Image</label>
+            <input className="input" type="file" accept="image/*" onChange={(e) => setForm(Object.assign({}, form, { image: e.target.files[0] }))} />
+          </div>
+          <button className="btn ok" onClick={save}>Save product</button>
+        </div>
+      ) : null}
+      <div className="grid">
+        {products.map((p) => (
+          <div className="card stack" key={p.id}>
+            {p.image_url ? <img className="thumb" src={p.image_url} alt="" /> : <div className="thumb" />}
+            <b>{p.title}</b>
+            <div style={{ color: '#93c5fd', fontWeight: 800 }}>ETB {p.price}</div>
+            <div className="muted">Stock {p.stock_quantity} · {p.active === false ? 'inactive' : 'active'}</div>
+            <div className="muted" style={{ fontSize: '0.8rem' }}>{(p.category && p.category.name) || ''}</div>
+            <button className="btn danger sm" onClick={() => remove(p.id)}>Delete</button>
+          </div>
+        ))}
+      </div>
+      {!products.length ? <div className="empty">No products</div> : null}
+    </div>
+  );
+}
+
+function Categories({ toast }) {
+  const [list, setList] = useState([]);
+  const [name, setName] = useState('');
+  const [editing, setEditing] = useState(null);
+  const load = () => api('/categories').then(setList).catch((e) => toast(e.message));
+  useEffect(() => { load(); }, []);
+  const save = async () => {
+    if (!name.trim()) return;
+    try {
+      if (editing) await api('/admin/categories/' + editing.id, { method: 'PUT', body: { name: name.trim() } });
+      else await api('/admin/categories', { method: 'POST', body: { name: name.trim() } });
+      setName('');
+      setEditing(null);
+      load();
+    } catch (e) { toast(e.message); }
+  };
+  const del = async (id) => {
+    try {
+      await api('/admin/categories/' + id, { method: 'DELETE' });
+      load();
+    } catch (e) { toast(e.message); }
+  };
+  return (
+    <div className="stack">
+      <div className="row">
+        <input className="input" style={{ flex: 1 }} placeholder={editing ? 'Edit name' : 'New category'} value={name} onChange={(e) => setName(e.target.value)} />
+        <button className="btn ok" onClick={save}>{editing ? 'Update' : 'Add'}</button>
+        {editing ? <button className="btn ghost" onClick={() => { setEditing(null); setName(''); }}>Cancel</button> : null}
+      </div>
+      {list.map((c) => (
+        <div className="card row" key={c.id} style={{ justifyContent: 'space-between' }}>
+          <div><b>{c.name}</b> <span className="muted">({c.products_count || 0} products)</span></div>
+          <div className="row">
+            <button className="btn ghost sm" onClick={() => { setEditing(c); setName(c.name); }}>Edit</button>
+            <button className="btn danger sm" onClick={() => del(c.id)}>Delete</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Inventory({ toast }) {
+  const [rows, setRows] = useState([]);
+  const [edits, setEdits] = useState({});
+  const load = async () => {
+    try {
+      const d = await api('/admin/inventory');
+      const list = d.data || d || [];
+      setRows(list);
+      const m = {};
+      list.forEach((p) => { m[p.id] = String(p.stock_quantity); });
+      setEdits(m);
+    } catch (e) { toast(e.message); }
+  };
+  useEffect(() => { load(); }, []);
+  const save = async (id) => {
+    try {
+      await api('/admin/inventory/' + id, { method: 'PUT', body: { stock_quantity: parseInt(edits[id], 10) || 0 } });
+      toast('Stock saved');
+      load();
+    } catch (e) { toast(e.message); }
+  };
+  return (
+    <div className="stack">
+      {rows.map((p) => (
+        <div className="card row" key={p.id} style={{ justifyContent: 'space-between' }}>
+          <div>
+            <b>{p.title}</b>
+            <div className="muted">ETB {p.price} · {(p.category && p.category.name) || ''}</div>
+          </div>
+          <div className="row">
+            <input className="input" style={{ width: 90 }} value={edits[p.id] || ''} onChange={(e) => setEdits(Object.assign({}, edits, { [p.id]: e.target.value }))} />
+            <button className="btn ok sm" onClick={() => save(p.id)}>Save</button>
+          </div>
+        </div>
+      ))}
+      {!rows.length ? <div className="empty">No inventory</div> : null}
+    </div>
+  );
+}
+
+function Customers({ toast, openChat }) {
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    api('/admin/customers').then((d) => setRows(d.data || d || [])).catch((e) => toast(e.message));
+  }, [toast]);
+  return (
+    <div className="stack">
+      {rows.map((u) => (
+        <div className="card row" key={u.id} style={{ justifyContent: 'space-between' }}>
+          <div>
+            <b>{u.name}</b>
+            <div className="muted">{u.email} · orders {u.orders_count || 0}</div>
+          </div>
+          <button className="btn sm" onClick={() => openChat(u.id)}>Chat</button>
+        </div>
+      ))}
+      {!rows.length ? <div className="empty">No customers</div> : null}
+    </div>
+  );
+}
+
+function Chat({ user, toast, initialReceiverId }) {
+  const [receiverId, setReceiverId] = useState(initialReceiverId || null);
+  const [users, setUsers] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState('');
+  const [live, setLive] = useState(false);
+  const boxRef = useRef(null);
+
+  useEffect(() => {
+    api('/admin/chat-users').then((list) => {
+      setUsers(list || []);
+      if (!receiverId && list && list.length) setReceiverId(list[0].id);
+    }).catch((e) => toast(e.message));
+  }, [toast]);
+
+  useEffect(() => {
+    if (initialReceiverId) setReceiverId(initialReceiverId);
+  }, [initialReceiverId]);
+
+  const load = useCallback(async () => {
+    if (!receiverId) return;
+    try {
+      const d = await api('/chat/messages/' + receiverId);
+      setMessages(d.data || d || []);
+    } catch (e) { toast(e.message); }
+  }, [receiverId, toast]);
+
+  useEffect(() => {
+    load();
+    if (live) return undefined;
+    const t = setInterval(load, 12000);
+    return () => clearInterval(t);
+  }, [load, live]);
+
+  useEffect(() => {
+    if (!receiverId || !user) return undefined;
+    const echo = window.kuluCreateEcho ? window.kuluCreateEcho() : null;
+    if (!echo) { setLive(false); return undefined; }
+    const name = window.kuluConversationChannel(user.id, receiverId);
+    setLive(true);
+    echo.private(name).listen('.message.sent', (payload) => {
+      if (!payload || !payload.id) return;
+      setMessages((prev) => prev.some((m) => m.id === payload.id) ? prev : prev.concat([payload]));
+    });
+    return () => { try { echo.leave(name); } catch (e) {} setLive(false); };
+  }, [receiverId, user]);
+
+  useEffect(() => {
+    if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
+  }, [messages]);
+
+  const send = async () => {
+    if (!text.trim() || !receiverId) return;
+    const body = text.trim();
+    setText('');
+    try {
+      const msg = await api('/chat/send', { method: 'POST', body: { receiver_id: receiverId, message: body } });
+      setMessages((prev) => prev.some((m) => m.id === msg.id) ? prev : prev.concat([msg]));
+    } catch (e) {
+      setText(body);
+      toast(e.message);
+    }
+  };
+
+  return (
+    <div className="stack">
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <h3 style={{ margin: 0 }}>Support chat</h3>
+        <span className="chip">{live ? 'Realtime' : 'Polling'}</span>
+      </div>
+      <select className="input" value={receiverId || ''} onChange={(e) => setReceiverId(Number(e.target.value))}>
+        {(users || []).map((u) => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
+      </select>
+      <div className="chat-box" ref={boxRef}>
+        {messages.map((m) => (
+          <div key={m.id} className={'msg' + (m.sender_id === user.id ? ' me' : '')}>
+            <b>{m.sender_id === user.id ? 'You' : 'Customer'}:</b> {m.message}
+          </div>
+        ))}
+        {!messages.length ? <div className="empty">No messages</div> : null}
+      </div>
+      <div className="row">
+        <input className="input" style={{ flex: 1 }} value={text} onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') send(); }} placeholder="Reply…" />
+        <button className="btn" onClick={send}>Send</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [user, setUser] = useState(() => {
+    const u = storageGet('kulu_user', null);
+    return u && u.role === 'admin' ? u : null;
+  });
+  const [page, setPage] = useState('overview');
+  const [toastMsg, setToastMsg] = useState('');
+  const [chatUserId, setChatUserId] = useState(null);
+  const toast = useCallback((m) => setToastMsg(String(m)), []);
+
+  const logout = async () => {
+    authToken = null;
+    localStorage.removeItem('kulu_token');
+    localStorage.removeItem('kulu_user');
+    try { if (firebase.apps.length) await firebase.auth().signOut(); } catch (e) {}
+    setUser(null);
+  };
+
+  if (!API || API.indexOf('YOUR-API') !== -1) {
+    return (
+      <div className="login-wrap">
+        <div className="card login-card">
+          <h2>Configure API</h2>
+          <p className="muted">Edit <b>web/config.js</b> — set API_BASE_URL and Firebase.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <Login onLogin={setUser} toast={toast} />
+        <Toast message={toastMsg} onClose={() => setToastMsg('')} />
+      </>
+    );
+  }
+
+  const nav = [
+    ['overview', 'Overview'],
+    ['orders', 'Orders'],
+    ['products', 'Products'],
+    ['categories', 'Categories'],
+    ['inventory', 'Inventory'],
+    ['customers', 'Customers'],
+    ['chat', 'Live chat'],
+  ];
+
+  const titles = Object.fromEntries(nav);
+
+  return (
+    <div className="layout">
+      <aside className="sidebar">
+        <div className="brand">Kulu <span>Admin</span></div>
+        {nav.map(([id, label]) => (
+          <button key={id} className={'nav-btn' + (page === id ? ' on' : '')}
+            onClick={() => setPage(id)}>{label}</button>
+        ))}
+        <div style={{ flex: 1 }} />
+        <div className="muted" style={{ padding: '8px 12px', fontSize: '0.85rem' }}>{user.name}</div>
+        <button className="nav-btn" onClick={logout}>Sign out</button>
+      </aside>
+      <main className="main">
+        <div className="top">
+          <h1 className="h1">{titles[page] || 'Admin'}</h1>
+        </div>
+        {page === 'overview' ? <Overview toast={toast} /> : null}
+        {page === 'orders' ? <Orders toast={toast} /> : null}
+        {page === 'products' ? <Products toast={toast} /> : null}
+        {page === 'categories' ? <Categories toast={toast} /> : null}
+        {page === 'inventory' ? <Inventory toast={toast} /> : null}
+        {page === 'customers' ? (
+          <Customers toast={toast} openChat={(id) => { setChatUserId(id); setPage('chat'); }} />
+        ) : null}
+        {page === 'chat' ? <Chat user={user} toast={toast} initialReceiverId={chatUserId} /> : null}
+      </main>
+      <Toast message={toastMsg} onClose={() => setToastMsg('')} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
