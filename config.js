@@ -1,9 +1,7 @@
 // ===== Kulu Web Config =====
 window.KULU_CONFIG = {
   // Laravel API base (must include /api)
-  // TODO: Replace with your actual API domain
-  // Example: https://api.kulu.app/api
-  API_BASE_URL: 'https://YOUR-API-DOMAIN.com/api',
+  API_BASE_URL: 'https://kulu.xo.je/api',
 
   // Firebase Web app config
   // Project: Kulu Online Shopping (kuluapps)
