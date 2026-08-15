@@ -1,17 +1,50 @@
+# Dependencies
 node_modules/
+vendor/
+
+# Build outputs
 android/.gradle/
 android/app/build/
 android/build/
-android/app/google-services.json
-*.keystore
-*.jks
+
+# Credentials & secrets
 .env
-vendor/
-storage/logs/
-storage/framework/
-storage/app/public/*
-!storage/app/public/.gitkeep
+.env.local
+.env.*.local
+android/app/google-services.json
 storage/firebase/*.json
 !storage/firebase/README.md
+*.keystore
+*.jks
 *.pem
 *.p12
+*.key
+
+# Logs & cache
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/public/*
+!storage/app/public/.gitkeep
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/views/.gitignore
+bootstrap/cache/*.php
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Composer
+composer.phar
+
+# Misc
+.lastlogin
+.override

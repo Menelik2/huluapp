@@ -17,10 +17,18 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
 
+        $middleware->use([
+            \Illuminate\Http\Middleware\TrustProxies::class,
+            \Illuminate\Http\Middleware\HandleCors::class,
+            \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
+            \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
+            \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+            \App\Http\Middleware\SecurityHeaders::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: [
-            'api/payments/chapa/webhook',
+            'api/*',
             'payments/chapa/webhook',
-            'api/broadcasting/auth',
             'broadcasting/auth',
         ]);
     })
